@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f2f2f7">
+<title>逆向排程</title>
+<style>
+:root{--bg:#f2f2f7;--card:#fff;--tx:#1c1c1e;--tx2:#8e8e93;--sep:rgba(60,60,67,.16);--blue:#007aff;--green:#34c759;--red:#ff3b30;--org:#ff9500;--fill:rgba(118,118,128,.12);--bar:rgba(242,242,247,.82);box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#000;--card:#1c1c1e;--tx:#fff;--tx2:#98989f;--sep:rgba(84,84,88,.55);--blue:#0a84ff;--fill:rgba(118,118,128,.3);--bar:rgba(0,0,0,.78)}}
+:root[data-theme="dark"]{--bg:#000;--card:#1c1c1e;--tx:#fff;--tx2:#98989f;--sep:rgba(84,84,88,.55);--blue:#0a84ff;--fill:rgba(118,118,128,.3);--bar:rgba(0,0,0,.78)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang TC","Noto Sans TC","Helvetica Neue",sans-serif;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 16px 48px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bar);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--sep)}
+nav .in{max-width:760px;margin:0 auto;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+nav b{font-size:17px;font-weight:600}
+.tb{display:flex;gap:4px}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
+.tbtn{color:var(--blue);padding:6px 10px;border-radius:10px;font-size:15px}
+.tbtn:active{background:var(--fill)}
+h1{font-size:32px;line-height:1.15;letter-spacing:.2px;margin:14px 4px 2px;font-weight:700}
+.sub{margin:0 4px 6px;color:var(--tx2);font-size:13px}
+h2{font-size:13px;color:var(--tx2);font-weight:400;margin:22px 16px 6px;letter-spacing:.2px}
+.card{background:var(--card);border-radius:12px;overflow:hidden}
+.cell{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 16px;min-height:44px;position:relative}
+.cell+.cell::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
+.cell label{white-space:nowrap}
+.cell input,.cell select{font:inherit;color:var(--blue);background:none;border:0;outline:0;text-align:right;min-width:0;flex:1;max-width:100%;-webkit-appearance:none;appearance:none;direction:ltr}
+.cell select{text-align-last:right}
+.seg{display:flex;background:var(--fill);border-radius:9px;padding:2px;margin:10px 16px;gap:2px}
+.seg button{flex:1;padding:6px 4px;border-radius:7px;font-size:13px;font-weight:500}
+.seg button.on{background:var(--card);box-shadow:0 1px 3px rgba(0,0,0,.18)}
+.foot{margin:6px 16px 0;color:var(--tx2);font-size:12px}
+.sum{background:linear-gradient(145deg,#0a84ff,#5e5ce6);color:#fff;border-radius:16px;padding:18px;margin-top:16px}
+.sum .g{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sum small{opacity:.8;font-size:12px;display:block}
+.sum .v{font-size:24px;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:-.3px}
+.sum .d{font-size:12px;opacity:.85}
+.sum .st{margin-top:14px;padding-top:12px;border-top:.5px solid rgba(255,255,255,.35);font-weight:600;display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.banner{margin-top:12px;border-radius:12px;padding:12px 14px;font-size:13px;display:flex;gap:10px}
+.banner.red{background:rgba(255,59,48,.14);color:var(--red)}
+.banner.org{background:rgba(255,149,0,.16);color:#c93400}
+.banner.grn{background:rgba(52,199,89,.16);color:#1f8a3d}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]) .banner.org{color:var(--org)}:root:not([data-theme="light"]) .banner.grn{color:var(--green)}}
+.banner b{display:block;font-size:14px}
+.row{padding:12px 16px;position:relative}
+.row+.row::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
+.r1{display:flex;align-items:center;gap:10px}
+.dot{width:10px;height:10px;border-radius:50%;flex:none}
+.nm{flex:1;min-width:0;font:inherit;font-weight:600;background:none;border:0;outline:0;color:var(--tx);padding:2px 0}
+.nt{width:100%;font:inherit;font-size:13px;background:none;border:0;outline:0;color:var(--tx2);padding:4px 0 0 20px}
+.r2{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:6px 0 0 20px;flex-wrap:wrap}
+.dt{font-size:13px;color:var(--tx2);font-variant-numeric:tabular-nums}
+.dt b{color:var(--tx);font-weight:500}
+.step{display:flex;align-items:center;background:var(--fill);border-radius:8px}
+.step button{width:32px;height:30px;font-size:18px;color:var(--blue)}
+.step button:active{opacity:.4}
+.step input{width:38px;text-align:center;font:inherit;font-weight:600;background:none;border:0;outline:0;color:var(--tx);-moz-appearance:textfield}
+.step input::-webkit-inner-spin-button{display:none}
+.step span{font-size:12px;color:var(--tx2);padding-right:8px}
+.ib{color:var(--blue);width:30px;height:30px;border-radius:50%;font-size:16px}
+.ib:active{background:var(--fill)}
+.ib.del{color:var(--red)}
+.ib:disabled{opacity:.25}
+.acts{display:flex}
+.add{display:block;width:100%;text-align:left;color:var(--blue);padding:13px 16px;font-weight:500}
+.g1{padding:14px 16px;display:flex;flex-direction:column;gap:10px;max-height:420px;overflow:auto}
+.gl{display:flex;justify-content:space-between;font-size:12px;gap:8px}
+.gl span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gl span:last-child{color:var(--tx2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.gt{height:8px;background:var(--fill);border-radius:4px;margin-top:4px;position:relative}
+.gt i{position:absolute;top:0;bottom:0;border-radius:4px;transition:left .25s,width .25s}
+.pill{display:inline-block;font-size:11px;padding:1px 7px;border-radius:99px;background:var(--fill);color:var(--tx2);margin-left:6px}
+.pill.c{background:rgba(255,149,0,.18);color:var(--org)}
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.4);display:none;align-items:flex-end;justify-content:center}
+.sheet.show{display:flex}
+.sh{background:var(--bg);width:100%;max-width:560px;max-height:88%;overflow:auto;border-radius:14px 14px 0 0;padding:8px 16px calc(16px + env(safe-area-inset-bottom,0px));animation:up .28s cubic-bezier(.2,.8,.2,1)}
+@keyframes up{from{transform:translateY(40px);opacity:0}}
+.grab{width:36px;height:5px;border-radius:3px;background:var(--sep);margin:0 auto 8px}
+.sh .hd{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+.sh .hd b{font-size:17px}
+.mr{padding:12px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px;position:relative}
+.mr+.mr::before{content:"";position:absolute;top:0;left:16px;right:0;border-top:.5px solid var(--sep)}
+.mr small{display:block;color:var(--tx2);font-size:12px}
+.btn{display:block;width:100%;background:var(--blue);color:#fff;border-radius:12px;padding:14px;font-weight:600;text-align:center;margin-top:12px}
+.btn.alt{background:var(--card);color:var(--blue)}
+#toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translate(-50%,30px);opacity:0;background:rgba(40,40,42,.92);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;z-index:99;pointer-events:none;transition:.3s;backdrop-filter:blur(12px);max-width:90%;text-align:center}
+#toast.show{transform:translate(-50%,0);opacity:1}
+:focus-visible{outline:2px solid var(--blue);outline-offset:1px;border-radius:6px}
+@media print{nav,.acts,.add,.step button,.tb,.sheet{display:none!important}body{background:#fff}}
+</style>
+</head>
+<body>
+<nav><div class="in"><b>逆向排程</b><div class="tb"><button class="tbtn" id="bCsv">CSV</button><button class="tbtn" id="bMd">複製表格</button><button class="tbtn" onclick="print()">列印</button></div></div></nav>
+<div class="wrap">
+<h1>逆向排程</h1>
+<p class="sub">輸入交期，自動往前推算每個製程的開始與完成日。</p>
+
+<h2>專案</h2>
+<div class="card">
+  <div class="cell"><label for="proj">工單號</label><input id="proj" value="PRJ-2026-TITANIUM-VALVE-LOT01" autocomplete="off"></div>
+  <div class="cell"><label for="target">交付截止日</label><input type="date" id="target"></div>
+  <div class="cell"><label for="hol">額外休假日</label><input id="hol" placeholder="2026-10-10, 2026-12-25" autocomplete="off"></div>
+  <div class="seg" id="rule">
+    <button data-v="sat_sun">週休二日</button><button data-v="sun">僅週日休</button><button data-v="none">日曆天</button>
+  </div>
+</div>
+<p class="foot">休假日以逗號分隔，格式 YYYY-MM-DD。</p>
+
+<div id="alert"></div>
+<div class="sum">
+  <div class="g">
+    <div><small>最晚開工日</small><div class="v" id="kDate">--</div><div class="d" id="kDay"></div></div>
+    <div><small>交付截止日</small><div class="v" id="dDate">--</div><div class="d" id="dDay"></div></div>
+  </div>
+  <div class="st"><span id="left">推算中…</span><span id="total"></span></div>
+</div>
+
+<h2>製程範本</h2>
+<div class="card">
+  <div class="cell"><label for="tpl">範本</label><select id="tpl"></select></div>
+  <div class="cell"><label>另存新範本</label><button class="tbtn" id="bSaveAs">儲存</button></div>
+  <div class="cell"><label>覆寫目前範本</label><button class="tbtn" id="bOver">覆寫</button></div>
+  <div class="cell"><label>管理、匯入、匯出</label><button class="tbtn" id="bManage">開啟</button></div>
+</div>
+<p class="foot" id="tplDesc"></p>
+
+<h2>里程碑階段</h2>
+<div class="card" id="list"></div>
+<div class="card" style="margin-top:12px"><button class="add" id="bAdd">＋ 新增階段</button><div class="cell"><label>還原為範本原始內容</label><button class="tbtn" id="bReset" style="color:var(--red)">重設</button></div></div>
+
+<h2>甘特預覽</h2>
+<div class="card"><div class="g1" id="gantt"></div></div>
+</div>
+
+<div class="sheet" id="shSave"><div class="sh"><div class="grab"></div>
+  <div class="hd"><b>另存為自訂範本</b><button class="tbtn" data-close>取消</button></div>
+  <div class="card"><div class="cell"><label for="nName">名稱</label><input id="nName" placeholder="必填"></div><div class="cell"><label for="nDesc">說明</label><input id="nDesc" placeholder="選填"></div></div>
+  <button class="btn" id="bConfirm">儲存範本</button>
+</div></div>
+
+<div class="sheet" id="shManage"><div class="sh"><div class="grab"></div>
+  <div class="hd"><b>管理範本</b><button class="tbtn" data-close>完成</button></div>
+  <div class="card" id="mList"></div>
+  <button class="btn alt" id="bExp">匯出自訂範本 (JSON)</button>
+  <label class="btn alt" style="cursor:pointer">匯入範本 (JSON)<input type="file" id="fImp" accept=".json" hidden></label>
+</div></div>
+<div id="toast"></div>
+
+<script>
+const $=s=>document.querySelector(s);
+const PAL=["#007aff","#5ac8fa","#5856d6","#32ade6","#30b0c7","#ff9500","#af52de","#bf5af2","#34c759"];
+const mk=a=>a.map((r,i)=>({name:r[0],duration:r[1],note:r[2],color:PAL[i%PAL.length]}));
+const DEF={
+ ti_cw_fct:{name:"Ti 鑄造 + 焊接 + FCT",description:"鈦合金精密鑄造、結構焊接、CNC 加工與治具功能測試",builtin:true,milestones:mk([
+  ["DFM 評估、開模與試模",25,"模流分析與試模樣件確認"],["鈦合金真空精密鑄造",15,"Ti-6Al-4V 真空澆鑄"],["HIP 熱均壓與真空退火",7,"消除內部微氣孔"],["五軸 CNC 精密加工",10,"公差 ±0.01mm"],["氬弧／雷射焊接與 NDT 探傷",8,"X-Ray／滲透探傷"],["陽極氧化／微弧氧化",5,"耐腐蝕硬化膜層"],["FCT 治具設計與製作",12,"探針及電控迴路試車"],["FCT 測試與燒機驗證",5,"100% 導通與負載測試"],["OQC 終檢與出貨包裝",3,"COC 文件與量測報告"]])},
+ cw_fct:{name:"鑄造 + 焊接 + FCT",description:"鋼／鋁鑄件、結構熔接、CNC 加工與功能測試",builtin:true,milestones:mk([
+  ["壓鑄／重力鑄造模具與試模",20,"確認尺寸與收縮率"],["批量鑄造與澆冒口清理",10,"金相與外觀檢驗"],["T6 固溶與時效熱處理",4,"提升強度與硬度"],["CNC 銑削與攻牙",8,"定位孔與配合面"],["機器人焊接與氣密測試",7,"氦氣檢漏／水壓測漏"],["粉體塗裝或陽極防蝕",4,"膜厚與百格附著力"],["FCT 治具組裝與校正",8,"PLC 與 I/O 整合"],["系統裝配與 FCT 帶載測試",5,"耐壓／接地／功能"],["FQC／OQC 與入庫出貨",2,"紀錄歸檔與封箱"]])},
+ c_fct:{name:"鑄造 + FCT",description:"無焊接模組鑄件，CNC 與表面處理後直接 FCT",builtin:true,milestones:mk([
+  ["模具製作與試產檢討",18,"外觀缺陷與收縮改善"],["高壓壓鑄生產",8,"毛胚去毛邊"],["CNC 加工定位孔與密封槽",7,"密封面平面度"],["化成清洗與鈍化",3,"鹽霧測試達標"],["FCT 治具製作調校",7,"探針阻抗與良率"],["PCB 入殼與 FCT 驗收",4,"自動化程式判讀"],["成品終檢與交運",2,"封裝與標籤"]])},
+ ti_fct:{name:"Ti 鑄造 + FCT",description:"鈦合金結構鑄件、熱處理切削後直接電性測試",builtin:true,milestones:mk([
+  ["蠟模與陶瓷殼模開模",22,"精密脫蠟鑄造前端"],["真空鈦合金澆鑄",14,"控制吸氧吸氫量"],["HIP 緻密化與應力釋放",6,"改善疲勞壽命"],["五軸 CNC 與外觀研磨",9,"高硬度刀具加工"],["微弧氧化或微噴砂",4,"無塵清洗與防刮"],["氣動 FCT 治具整合",10,"探針接觸機構驗證"],["高低溫循環功能測試",5,"溫度循環驗證"],["品保終檢與放行",2,"材質證明與測試 Log"]])}
+};
+const TK="MFG_REVERSE_MILESTONE_TEMPLATES_V1",SK="MFG_PLANNER_STATE_V2",WD=["週日","週一","週二","週三","週四","週五","週六"];
+let T={},cur="ti_cw_fct",ms=[],rule="sat_sun",holSet=new Set(),calc=[];
+
+const store={get(k){try{return JSON.parse(localStorage.getItem(k))}catch(e){return null}},set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
+const clone=o=>JSON.parse(JSON.stringify(o));
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=d=>`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+const md=d=>fmt(d).slice(5);
+function toast(m){const t=$("#toast");t.textContent=m;t.classList.add("show");clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove("show"),2200)}
+
+function loadT(){T=clone(DEF);const s=store.get(TK);if(s&&typeof s==="object")Object.entries(s).forEach(([k,v])=>{if(v&&Array.isArray(v.milestones))T[k]={...v,builtin:false}})}
+function saveT(){const o={};Object.entries(T).forEach(([k,v])=>{if(!v.builtin)o[k]=v});store.set(TK,o)}
+function saveState(){store.set(SK,{proj:$("#proj").value,target:$("#target").value,hol:$("#hol").value,rule,cur,ms})}
+
+const off=d=>{const w=d.getDay();return holSet.has(fmt(d))||(rule==="sat_sun"&&(w===0||w===6))||(rule==="sun"&&w===0)};
+const back=d=>{const c=new Date(d);let n=0;while(off(c)&&n++<400)c.setDate(c.getDate()-1);return c};
+function readHol(){holSet=new Set(($("#hol").value.match(/\d{4}-\d{2}-\d{2}/g))||[])}
+function compute(){
+  const v=$("#target").value;if(!v||!ms.length)return[];
+  readHol();let end=back(new Date(v+"T00:00:00")),out=[];
+  for(let i=ms.length-1;i>=0;i--){
+    const n=Math.max(1,parseInt(ms[i].duration)||1);
+    let s=new Date(end),c=1,g=0;
+    while(c<n&&g++<5000){s.setDate(s.getDate()-1);if(!off(s))c++}
+    out[i]={...ms[i],duration:n,start:new Date(s),end:new Date(end)};
+    const p=new Date(s);p.setDate(p.getDate()-1);end=back(p);
+  }
+  return out;
+}
+
+function renderList(){
+  $("#list").innerHTML=ms.map((m,i)=>`<div class="row" data-i="${i}">
+    <div class="r1"><i class="dot" style="background:${m.color}"></i><input class="nm" value="${esc(m.name)}" aria-label="階段名稱">
+    <div class="acts"><button class="ib" data-a="up" ${i==0?"disabled":""} aria-label="上移">↑</button><button class="ib" data-a="dn" ${i==ms.length-1?"disabled":""} aria-label="下移">↓</button><button class="ib del" data-a="rm" aria-label="刪除">✕</button></div></div>
+    <div class="r2"><div class="dt"><b data-s></b> → <b data-e></b></div>
+    <div class="step"><button data-a="m" aria-label="減少">−</button><input class="du" type="number" inputmode="numeric" min="1" max="999" value="${m.duration}" aria-label="工期天數"><button data-a="p" aria-label="增加">＋</button><span>天</span></div></div>
+    <input class="nt" value="${esc(m.note)}" placeholder="備註／驗收重點" aria-label="備註"></div>`).join("")||`<div class="row" style="color:var(--tx2)">尚無階段，點下方「新增階段」。</div>`;
+  update();
+}
+
+function update(){
+  calc=compute();
+  document.querySelectorAll("#list .row[data-i]").forEach(r=>{const c=calc[r.dataset.i];if(!c)return;r.querySelector("[data-s]").textContent=md(c.start)+" "+WD[c.start.getDay()];r.querySelector("[data-e]").textContent=md(c.end)+" "+WD[c.end.getDay()]});
+  summary();gantt();saveState();
+}
+
+function summary(){
+  const al=$("#alert");
+  if(!calc.length){al.innerHTML="";["kDate","dDate"].forEach(i=>$("#"+i).textContent="--");$("#kDay").textContent=$("#dDay").textContent=$("#total").textContent="";$("#left").textContent="請選擇交付日";return}
+  const k=calc[0].start,d=calc[calc.length-1].end,tot=calc.reduce((a,c)=>a+c.duration,0);
+  $("#kDate").textContent=fmt(k);$("#kDay").textContent=WD[k.getDay()];
+  $("#dDate").textContent=fmt(d);
+  const asked=$("#target").value,adj=asked!==fmt(d);
+  $("#dDay").textContent=WD[d.getDay()]+(adj?"（原交期為休假日，已提前）":"");
+  $("#total").textContent=`共 ${tot} 個工作天`;
+  const t=new Date();t.setHours(0,0,0,0);const z=new Date(k);z.setHours(0,0,0,0);
+  const n=Math.round((z-t)/864e5);let cls,h,p,l;
+  if(n<0){cls="red";l=`已逾期 ${-n} 天`;h=`來不及了：最晚開工日 ${fmt(k)} 已過`;p=`今天開工無法如期交付。可協商展延交期、壓縮模具與鑄造外協工期，或讓治具製作與開模並行。`}
+  else if(n<=5){cls="org";l=n?`剩 ${n} 天準備`:"今天必須開工";h=`時程緊迫：距最晚開工日只剩 ${n} 天`;p=`請立即確認原料庫存與機台產能，並凍結圖面。`}
+  else{cls="grn";l=`尚餘 ${n} 天準備`;h="時程充裕";p=`最晚 ${fmt(k)}（${WD[k.getDay()]}）開工，即可在 ${fmt(d)} 如期交付。`}
+  $("#left").textContent=l;
+  al.innerHTML=`<div class="banner ${cls}"><div><b>${h}</b>${p}</div></div>`;
+}
+
+function gantt(){
+  const g=$("#gantt");if(!calc.length){g.innerHTML="";return}
+  const a=calc[0].start.getTime(),z=calc[calc.length-1].end.getTime()+864e5,sp=Math.max(1,z-a);
+  g.innerHTML=calc.map((c,i)=>{const l=(c.start-a)/sp*100,w=Math.max(2.5,(c.end-c.start+864e5)/sp*100);
+    return `<div><div class="gl"><span>${i+1}. ${esc(c.name)}</span><span>${c.duration}天 ${md(c.start)}~${md(c.end)}</span></div><div class="gt"><i style="left:${l.toFixed(1)}%;width:${Math.min(w,100-l).toFixed(1)}%;background:${c.color}"></i></div></div>`}).join("");
+}
+
+function fillTpl(){
+  const s=$("#tpl"),opt=(k,v)=>`<option value="${k}">${esc(v.name)}</option>`;
+  const b=Object.entries(T).filter(([,v])=>v.builtin),c=Object.entries(T).filter(([,v])=>!v.builtin);
+  s.innerHTML=`<optgroup label="內建">${b.map(([k,v])=>opt(k,v)).join("")}</optgroup>`+(c.length?`<optgroup label="自訂">${c.map(([k,v])=>opt(k,v)).join("")}</optgroup>`:"");
+  s.value=cur;
+  const t=T[cur];$("#tplDesc").innerHTML=t?esc(t.description||t.name)+`<span class="pill ${t.builtin?"":"c"}">${t.builtin?"內建":"自訂"}</span>`:"";
+}
+function useTpl(k,keep){if(!T[k])return;cur=k;if(!keep)ms=clone(T[k].milestones);fillTpl();renderList()}
+
+const open=id=>$(id).classList.add("show"),shut=()=>document.querySelectorAll(".sheet").forEach(s=>s.classList.remove("show"));
+document.querySelectorAll(".sheet").forEach(s=>s.addEventListener("click",e=>{if(e.target===s||e.target.hasAttribute("data-close"))shut()}));
+document.addEventListener("keydown",e=>{if(e.key==="Escape")shut()});
+
+function saveAs(){const n=$("#nName").value.trim();if(!n){toast("請輸入範本名稱");$("#nName").focus();return}
+  const k="custom_"+Date.now();T[k]={name:n,description:$("#nDesc").value.trim()||"自訂製程範本",builtin:false,milestones:clone(ms)};
+  saveT();cur=k;fillTpl();shut();toast(`已儲存「${n}」`)}
+function overwrite(){const t=T[cur];if(t.builtin){$("#nName").value=t.name+"（修訂版）";$("#nDesc").value="";open("#shSave");toast("內建範本受保護，改為另存新範本");return}
+  t.milestones=clone(ms);saveT();toast(`已覆寫「${t.name}」`)}
+function manage(){
+  $("#mList").innerHTML=Object.entries(T).map(([k,v])=>`<div class="mr"><div><b>${esc(v.name)}</b><span class="pill ${v.builtin?"":"c"}">${v.builtin?"內建":"自訂"}</span><small>${v.milestones.length} 個階段｜${esc(v.description||"")}</small></div><div style="display:flex;gap:2px;flex:none"><button class="tbtn" data-load="${k}">載入</button>${v.builtin?"":`<button class="tbtn" style="color:var(--red)" data-del="${k}">刪除</button>`}</div></div>`).join("");
+  open("#shManage");
+}
+$("#mList").addEventListener("click",e=>{const l=e.target.dataset.load,d=e.target.dataset.del;
+  if(l){useTpl(l);shut();toast(`已載入「${T[l].name}」`)}
+  if(d){if(!confirm(`確定刪除「${T[d].name}」？`))return;delete T[d];saveT();if(cur===d){cur="ti_cw_fct";ms=clone(T[cur].milestones)}fillTpl();renderList();manage()}});
+$("#bExp").onclick=()=>{const o={};Object.entries(T).forEach(([k,v])=>{if(!v.builtin)o[k]=v});
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(o,null,2)],{type:"application/json"}));a.download=`製程範本備份_${fmt(new Date())}.json`;a.click();toast("已匯出")};
+$("#fImp").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const o=JSON.parse(r.result);let n=0;
+  Object.entries(o).forEach(([k,v])=>{if(v&&Array.isArray(v.milestones)){T[k]={...v,builtin:false,milestones:v.milestones.map((m,i)=>({name:String(m.name||"未命名"),duration:Math.max(1,parseInt(m.duration)||1),note:String(m.note||""),color:m.color&&m.color[0]==="#"?m.color:PAL[i%PAL.length]}))};n++}});
+  saveT();fillTpl();manage();toast(`已匯入 ${n} 個範本`)}catch(x){toast("JSON 格式錯誤")}};r.readAsText(f);e.target.value=""};
+
+function rows(){return calc.map((c,i)=>[i+1,c.name,c.duration,fmt(c.start),fmt(c.end),c.note||""])}
+$("#bCsv").onclick=()=>{if(!calc.length)return;const q=s=>`"${String(s).replace(/"/g,'""')}"`;
+  const csv="\uFEFF序號,製程階段,工期(天),開始日,完成日,備註\n"+rows().map(r=>[r[0],q(r[1]),r[2],r[3],r[4],q(r[5])].join(",")).join("\n");
+  const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.download=`${$("#proj").value||"排程"}_逆向排程.csv`;a.click();toast("已匯出 CSV")};
+$("#bMd").onclick=async()=>{if(!calc.length)return;
+  const m=`### 逆向排程：${$("#proj").value}\n\n- 最晚開工：${fmt(calc[0].start)}\n- 交付截止：${fmt(calc[calc.length-1].end)}\n\n| # | 階段 | 工期 | 開始 | 完成 | 備註 |\n|:-:|:--|:-:|:-:|:-:|:--|\n`+rows().map(r=>`| ${r[0]} | ${r[1]} | ${r[2]} 天 | ${r[3]} | ${r[4]} | ${r[5]||"-"} |`).join("\n");
+  try{await navigator.clipboard.writeText(m)}catch(e){const t=document.createElement("textarea");t.value=m;document.body.appendChild(t);t.select();try{document.execCommand("copy")}catch(x){}t.remove()}
+  toast("已複製 Markdown 表格")};
+
+const L=$("#list");
+L.addEventListener("input",e=>{const r=e.target.closest(".row[data-i]");if(!r)return;const m=ms[r.dataset.i],c=e.target.classList;
+  if(c.contains("nm"))m.name=e.target.value||"未命名階段";
+  else if(c.contains("nt"))m.note=e.target.value;
+  else if(c.contains("du")){m.duration=Math.max(1,parseInt(e.target.value)||1)}
+  update()});
+L.addEventListener("change",e=>{if(e.target.classList.contains("du")){e.target.value=ms[e.target.closest(".row").dataset.i].duration}});
+L.addEventListener("click",e=>{const b=e.target.closest("button[data-a]");if(!b)return;const i=+b.closest(".row").dataset.i,a=b.dataset.a;
+  if(a==="m"||a==="p"){const m=ms[i];m.duration=Math.max(1,Math.min(999,(parseInt(m.duration)||1)+(a==="p"?1:-1)));b.parentNode.querySelector(".du").value=m.duration;update()}
+  else if(a==="up"&&i>0){[ms[i-1],ms[i]]=[ms[i],ms[i-1]];renderList()}
+  else if(a==="dn"&&i<ms.length-1){[ms[i+1],ms[i]]=[ms[i],ms[i+1]];renderList()}
+  else if(a==="rm"){if(ms.length<=1){toast("至少需保留一個階段");return}ms.splice(i,1);renderList()}});
+
+$("#bAdd").onclick=()=>{ms.push({name:`新製程工序 ${ms.length+1}`,duration:5,note:"",color:PAL[ms.length%PAL.length]});renderList();L.lastElementChild.scrollIntoView({behavior:"smooth",block:"center"})};
+$("#bReset").onclick=()=>{if(confirm("確定要還原為範本原始內容？"))useTpl(cur);};
+$("#bSaveAs").onclick=()=>{$("#nName").value="";$("#nDesc").value="";open("#shSave");setTimeout(()=>$("#nName").focus(),300)};
+$("#bConfirm").onclick=saveAs;$("#bOver").onclick=overwrite;$("#bManage").onclick=manage;
+$("#tpl").onchange=e=>{useTpl(e.target.value);toast(`已載入「${T[cur].name}」`)};
+$("#target").onchange=update;$("#hol").oninput=update;$("#proj").oninput=saveState;
+function setRule(v){rule=v;document.querySelectorAll("#rule button").forEach(b=>b.classList.toggle("on",b.dataset.v===v))}
+$("#rule").onclick=e=>{const v=e.target.dataset.v;if(v){setRule(v);update()}};
+
+(function init(){
+  loadT();
+  const d=new Date(),def=new Date(d.getFullYear(),d.getMonth()+3,20);$("#target").value=fmt(def);
+  const s=store.get(SK);
+  if(s){$("#proj").value=s.proj||$("#proj").value;if(s.target)$("#target").value=s.target;$("#hol").value=s.hol||"";if(s.rule)rule=s.rule;if(T[s.cur])cur=s.cur;
+    if(Array.isArray(s.ms)&&s.ms.length)ms=s.ms}
+  if(!ms.length)ms=clone(T[cur].milestones);
+  setRule(rule);fillTpl();renderList();
+})();
+</script>
+</body>
+</html>
